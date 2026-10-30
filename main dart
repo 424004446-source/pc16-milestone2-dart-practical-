@@ -1,0 +1,259 @@
+import 'dart:async';
+
+// ============================================================================
+// 1. ABSTRACT CLASS / INTERFACE (Contract Design)
+// WHAT: Defines the abstract class ElectronicDevice with a pure bootUp() contract.
+// WHY: Enforces standard initialization behavior across all device types,
+//      guaranteeing that any concrete subclass implements its own boot routine.
+// ============================================================================
+abstract class ElectronicDevice {
+  void bootUp();
+}
+
+// ============================================================================
+// 2. BASE CLASS & ENCAPSULATION (Week 9 Core OOP)
+// WHAT: Base class representing a general Cellphone, extending ElectronicDevice.
+// WHY: Encapsulates sensitive state (_speaker) behind private fields and accessors,
+//      preventing direct external mutation while establishing common properties.
+// ============================================================================
+abstract class Cellphone extends ElectronicDevice {
+  // Private field enforcing encapsulation
+  String _speaker;
+  
+  // Public fields defining hardware properties
+  String camera;
+  String keyboard;
+
+  // Constructor using initializer list to bind the private _speaker property
+  Cellphone({
+    required String speaker,
+    required this.camera,
+    required this.keyboard,
+  }) : _speaker = speaker;
+
+  // Getter: Provides read-only access to the encapsulated _speaker field
+  String get speaker => _speaker;
+
+  // Setter: Validates new speaker input before mutation to prevent invalid state
+  set speaker(String newSpeaker) {
+    if (newSpeaker.trim().isNotEmpty) {
+      _speaker = newSpeaker;
+    } else {
+      print('Error: Speaker description cannot be empty.');
+    }
+  }
+
+  // Base behavior method 1
+  void tookAPhoto() {
+    print('Camera ($camera): Took a standard photo.');
+  }
+
+  // Base behavior method 2
+  void sendMessage(String message) {
+    print('Keyboard ($keyboard): Sent message -> "$message"');
+  }
+
+  // Base behavior method 3: Accesses encapsulated private variable
+  void playsAMusic(String song) {
+    print('Speaker ($_speaker): Playing audio -> "$song"');
+  }
+
+  // Composite method executing all three primary behaviors in a single call
+  void executeAllBehaviors(String message, String song) {
+    tookAPhoto();
+    sendMessage(message);
+    playsAMusic(song);
+  }
+
+  // ==========================================================================
+  // ASYNCHRONOUS METHOD (Week 11 Requirement)
+  // WHAT: Future-returning async method simulating a long-running software download.
+  // WHY: Models network latency without blocking the main execution thread,
+  //      enabling the UI to remain responsive during heavy background operations.
+  // ==========================================================================
+  Future<String> downloadSoftwareUpdate() async {
+    print('   [ASYNC TASK STARTED] Connecting to server for update...');
+
+    // Future.delayed simulates 2 seconds of real-world server round-trip latency
+    await Future.delayed(const Duration(seconds: 2));
+
+    return '   [ASYNC TASK COMPLETED] Firmware v11.0 update downloaded and installed!';
+  }
+}
+
+// ============================================================================
+// 3. MIXIN (Modular Feature Composition)
+// WHAT: Standalone mixin defining wireless charging capabilities.
+// WHY: Shared via the "with" keyword to decouple special features from the 
+//      primary class inheritance tree, avoiding class duplication.
+// ============================================================================
+mixin WirelessCharging {
+  void chargeWirelessly() {
+    print('Wireless Charging: Fast charging on induction pad at 15W...');
+  }
+}
+
+// ============================================================================
+// 4. DERIVED CLASS 1: Smartphone (Polymorphism & Mixin Usage)
+// WHAT: Subclass extending Cellphone and adopting WirelessCharging mixin.
+// WHY: Demonstrates specialization by overriding base methods with high-end outputs.
+// ============================================================================
+class Smartphone extends Cellphone with WirelessCharging {
+  double screenSize;
+
+  Smartphone({
+    required String speaker,
+    required String camera,
+    required String keyboard,
+    required this.screenSize,
+  }) : super(speaker: speaker, camera: camera, keyboard: keyboard);
+
+  // Contract implementation from ElectronicDevice
+  @override
+  void bootUp() {
+    print('OS Boot: Initializing Smart OS on $screenSize-inch AMOLED display...');
+  }
+
+  // Polymorphic override of tookAPhoto()
+  @override
+  void tookAPhoto() {
+    print('Camera ($camera): Captured 4K Ultra-HD photo with AI HDR!');
+  }
+
+  // Polymorphic override of playsAMusic()
+  @override
+  void playsAMusic(String song) {
+    print('Speaker ($speaker): Streaming Dolby Atmos Lossless Audio -> "$song"');
+  }
+
+  // Subclass-specific async method for cloud sync operations
+  Future<String> syncCloudBackup() async {
+    print('   [ASYNC TASK STARTED] Backing up phone photos to Cloud...');
+    await Future.delayed(const Duration(seconds: 2));
+    return '   [ASYNC TASK COMPLETED] Cloud Backup Successful: 15 GB synced!';
+  }
+}
+
+// ============================================================================
+// 5. DERIVED CLASS 2: FeaturePhone (Polymorphism)
+// WHAT: Subclass extending Cellphone representing low-spec retro devices.
+// WHY: Demonstrates polymorphic variance by providing distinct implementations
+//      of the exact same method signatures used in Smartphone.
+// ============================================================================
+class FeaturePhone extends Cellphone {
+  bool hasFMCard;
+
+  FeaturePhone({
+    required String speaker,
+    required String camera,
+    required String keyboard,
+    required this.hasFMCard,
+  }) : super(speaker: speaker, camera: camera, keyboard: keyboard);
+
+  // Contract implementation from ElectronicDevice
+  @override
+  void bootUp() {
+    print('OS Boot: Powering on retro firmware system...');
+  }
+
+  // Polymorphic override of tookAPhoto()
+  @override
+  void tookAPhoto() {
+    print('Camera ($camera): Captured 0.3MP VGA snapshot.');
+  }
+
+  // Polymorphic override of playsAMusic()
+  @override
+  void playsAMusic(String song) {
+    print('Speaker ($speaker): Playing 8-bit Polyphonic ringtone -> "$song"');
+  }
+}
+
+// ============================================================================
+// 6. MAIN EXECUTION & VERIFICATION (Weeks 7–11 Integration)
+// WHAT: Main entry point marked "async" to coordinate synchronous & asynchronous flows.
+// WHY: Demonstrates collection usage (Lists/Maps), polymorphism, encapsulation,
+//      and non-blocking asynchronous execution in a structured workflow.
+// ============================================================================
+void main() async {
+  print('================================================================');
+  print('   PC16 MILESTONE 2 - CONSOLIDATED DART LOGICAL PRACTICAL      ');
+  print('================================================================\n');
+
+  // Object Instantiation (Polymorphic instances)
+  Smartphone phone1 = Smartphone(
+    speaker: 'Stereo Dual Speakers',
+    camera: '200 MP Quad Camera',
+    keyboard: 'On-Screen Touch QWERTY',
+    screenSize: 6.7,
+  );
+
+  FeaturePhone phone2 = FeaturePhone(
+    speaker: 'Mono Rear Speaker',
+    camera: 'VGA Camera',
+    keyboard: 'Physical T9 Keypad',
+    hasFMCard: true,
+  );
+
+  // Collection 1: List storing polymorphic objects under base type reference
+  List<Cellphone> phoneList = [phone1, phone2];
+
+  // Collection 2: Map mapping string identifiers to Cellphone instances
+  Map<String, Cellphone> phoneMap = {
+    'SMART-01': phone1,
+    'FEAT-01': phone2,
+  };
+
+  print('--- DEMO 1: Synchronous OOP Iteration & Polymorphism ---');
+  // Control structure: Loop iterating through List collection (Week 7-8 skill)
+  for (int i = 0; i < phoneList.length; i++) {
+    Cellphone currentPhone = phoneList[i];
+    print('\n--- Cellphone Unit ${i + 1} [${currentPhone.runtimeType}] ---');
+
+    // Polymorphic method calls
+    currentPhone.bootUp();
+    currentPhone.executeAllBehaviors(
+      'Hello from Unit ${i + 1}!',
+      'Track #${i + 1}',
+    );
+
+    // Conditional check and explicit cast for Mixin feature
+    if (currentPhone is WirelessCharging) {
+      (currentPhone as WirelessCharging).chargeWirelessly();
+    }
+  }
+
+  print('\n----------------------------------------------------------------');
+  print('--- DEMO 2: Encapsulation & Map State Mutation ---');
+  // Mutating private field via public setter accessed through Map lookup
+  phoneMap['SMART-01']?.speaker = 'Harman Kardon Quad Speakers';
+  print('Updated Speaker for SMART-01 via Map: ${phoneMap['SMART-01']?.speaker}');
+
+  print('\n----------------------------------------------------------------');
+  print('--- DEMO 3: Asynchronous Non-Blocking Execution Proof ---');
+
+  print('\n1. Initiating background software update...');
+  
+  // Storing Future instance without immediately awaiting it
+  Future<String> updateTask = phone1.downloadSoftwareUpdate();
+
+  // Non-blocking proof: Executed immediately before the Future completes
+  print('2. PROOF OF NON-BLOCKING: This line prints IMMEDIATELY while update runs in background!');
+
+  // Awaiting Future resolution
+  String updateResult = await updateTask;
+  print('3. RESOLVED RESULT:\n$updateResult');
+
+  print('\n----------------------------------------------------------------');
+  print('--- DEMO 4: Subclass Asynchronous Cloud Backup ---');
+
+  print('\n1. Initiating cloud sync...');
+  Future<String> cloudTask = phone1.syncCloudBackup();
+  
+  print('2. PROOF OF NON-BLOCKING: App interface remains active during sync!');
+
+  String cloudResult = await cloudTask;
+  print('3. RESOLVED RESULT:\n$cloudResult');
+
+  print('\n================================================================');
+}
